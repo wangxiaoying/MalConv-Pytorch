@@ -62,10 +62,8 @@ sample_cnt = conf['sample_cnt']
 
 # Load Ground Truth.
 tr_label_table = pd.read_csv(train_label_path,header=None,index_col=0)
-# tr_label_table.index=tr_label_table.index.str.upper()
 tr_label_table = tr_label_table.rename(columns={1:'ground_truth'})
 val_label_table = pd.read_csv(valid_label_path,header=None,index_col=0)
-# val_label_table.index=val_label_table.index.str.upper()
 val_label_table = val_label_table.rename(columns={1:'ground_truth'})
 
 
@@ -102,14 +100,12 @@ del val_table
 
 
 malconv = MalConv(input_length=first_n_byte,window_size=window_size)
-bce_loss = nn.BCEWithLogitsLoss()
+cross_entropy_loss = nn.CrossEntropyLoss()
 adam_optim = optim.Adam([{'params':malconv.parameters()}],lr=learning_rate)
-sigmoid = nn.Sigmoid()
 
 if use_gpu:
     malconv = malconv.cuda()
-    bce_loss = bce_loss.cuda()
-    sigmoid = sigmoid.cuda()
+    cross_entropy_loss = cross_entropy_loss.cuda()
 
 
 step_msg = 'step-{}-loss-{:.6f}-acc-{:.4f}-time-{:.2f}'
@@ -141,22 +137,22 @@ while total_step < max_step:
         exe_input = Variable(exe_input.long(),requires_grad=False)
 
         label = batch_data[1].cuda() if use_gpu else batch_data[1]
-        label = Variable(label.float(),requires_grad=False)
+        label = Variable(label.long(),requires_grad=False).view(-1)
 
         pred = malconv(exe_input)
-        loss = bce_loss(pred,label)
+        loss = cross_entropy_loss(pred, label)
         loss.backward()
         adam_optim.step()
+        _, predval = torch.max(pred, 1)
 
-        # history['tr_loss'].append(loss.cpu().data.numpy()[0])
         history['tr_loss'].append(loss.cpu().data.numpy())
-        history['tr_acc'].extend(list(label.cpu().data.numpy().astype(int)==(sigmoid(pred).cpu().data.numpy()+0.5).astype(int)))
+        history['tr_acc'].extend(list(torch.eq(label.cpu().data, predval.cpu().data).cpu().data.numpy()))
 
         step_cost_time = time.time()-start
 
         if (step+1)%display_step == 0:
             print(step_msg.format(total_step,np.mean(history['tr_loss']),
-                                  np.mean(history['tr_acc']),step_cost_time),end='\r',flush=True)
+                                  np.mean(history['tr_acc']),step_cost_time),end='\n',flush=True)
         total_step += 1
 
         # Interupt for validation
@@ -176,15 +172,15 @@ while total_step < max_step:
         exe_input = Variable(exe_input.long(),requires_grad=False)
 
         label = val_batch_data[1].cuda() if use_gpu else val_batch_data[1]
-        label = Variable(label.float(),requires_grad=False)
+        label = Variable(label.long(),requires_grad=False).view(-1)
 
         pred = malconv(exe_input)
-        loss = bce_loss(pred,label)
+        loss = cross_entropy_loss(pred, label)
 
-        # history['val_loss'].append(loss.cpu().data.numpy()[0])
         history['val_loss'].append(loss.cpu().data.numpy())
-        history['val_acc'].extend(list(label.cpu().data.numpy().astype(int)==(sigmoid(pred).cpu().data.numpy()+0.5).astype(int)))
-        history['val_pred'].append(list(sigmoid(pred).cpu().data.numpy()))
+        _, predval = torch.max(pred.cpu().data, 1)
+        history['val_acc'].extend(list(torch.eq(label.cpu().data, predval).cpu().data.numpy()))
+        history['val_pred'].append(list(predval.cpu().data.numpy()))
 
     print(log_msg.format(total_step, np.mean(history['tr_loss']), np.mean(history['tr_acc']),
                     np.mean(history['val_loss']), np.mean(history['val_acc']),step_cost_time),

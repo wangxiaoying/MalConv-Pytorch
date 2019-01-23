@@ -12,14 +12,14 @@ class MalConv(nn.Module):
         self.conv_2 = nn.Conv1d(4, 128, window_size, stride=window_size, bias=True)
 
         self.pooling = nn.MaxPool1d(int(input_length/window_size))
-        
+
 
         self.fc_1 = nn.Linear(128,128)
-        self.fc_2 = nn.Linear(128,1)
+        self.fc_2 = nn.Linear(128,4)
 
         self.sigmoid = nn.Sigmoid()
         #self.softmax = nn.Softmax()
-        
+
 
     def forward(self,x):
         x = self.embed(x)
