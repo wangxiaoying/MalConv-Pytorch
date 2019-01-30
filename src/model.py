@@ -15,7 +15,7 @@ class MalConv(nn.Module):
 
 
         self.fc_1 = nn.Linear(128,128)
-        self.fc_2 = nn.Linear(128,4)
+        self.fc_2 = nn.Linear(128,9)
 
         self.sigmoid = nn.Sigmoid()
         #self.softmax = nn.Softmax()
