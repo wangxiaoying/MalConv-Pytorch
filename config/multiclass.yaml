@@ -1,10 +1,10 @@
 exp_name: 'multiclass'
 
 ### Data path
-train_data_path: 'data/train/'                    # Training data
-train_label_path: 'data/train-data.csv' # Training label                  
-valid_data_path: 'data/valid/'                    # Validation Data
-valid_label_path: 'data/valid-data.csv' # Validation Label
+train_data_path: '/home/wangxy/projects/def-jnwang/wangxy/data/kaggle/processed/train/'                    # Training data
+train_label_path: '/home/wangxy/projects/def-jnwang/wangxy/data/kaggle/processed/train.csv' # Training label                  
+valid_data_path: '/home/wangxy/projects/def-jnwang/wangxy/data/kaggle/processed/test/'                    # Validation Data
+valid_label_path: '/home/wangxy/projects/def-jnwang/wangxy/data/kaggle/processed/test.csv' # Validation Label
 
 ### output path
 log_dir: 'log/'
@@ -14,7 +14,7 @@ checkpoint_dir: 'checkpoint/'
 ### Parameter
 # use_gpu: False             #
 use_gpu: True             #
-use_cpu: 2                # Number of cores to use for data loader
+use_cpu: 20                # Number of cores to use for data loader
 display_step: 2           # Std output update rate during training
 test_step: 20             # Test per n step
 learning_rate: 0.0001     #

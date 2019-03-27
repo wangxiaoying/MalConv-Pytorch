@@ -8,8 +8,8 @@ class MalConv(nn.Module):
 
         self.embed = nn.Embedding(257, 8, padding_idx=0)
 
-        self.conv_1 = nn.Conv1d(4, 128, window_size, stride=window_size, bias=True)
-        self.conv_2 = nn.Conv1d(4, 128, window_size, stride=window_size, bias=True)
+        self.conv_1 = nn.Conv1d(8, 128, window_size, stride=window_size, bias=True)
+        self.conv_2 = nn.Conv1d(8, 128, window_size, stride=window_size, bias=True)
 
         self.pooling = nn.MaxPool1d(int(input_length/window_size))
 
@@ -26,8 +26,10 @@ class MalConv(nn.Module):
         # Channel first
         x = torch.transpose(x,-1,-2)
 
-        cnn_value = self.conv_1(x.narrow(-2, 0, 4))
-        gating_weight = self.sigmoid(self.conv_2(x.narrow(-2, 4, 4)))
+        # cnn_value = self.conv_1(x.narrow(-2, 0, 4))
+        # gating_weight = self.sigmoid(self.conv_2(x.narrow(-2, 4, 4)))
+        cnn_value = self.conv_1(x)
+        gating_weight = self.sigmoid(self.conv_2(x))
 
         x = cnn_value * gating_weight
         x = self.pooling(x)
