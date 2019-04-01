@@ -9,9 +9,9 @@ class MalConv(nn.Module):
         self.embed = nn.Embedding(257, 8, padding_idx=0)
 
         self.conv_1 = nn.Conv1d(8, 128, window_size, stride=window_size, bias=True)
-        self.conv_2 = nn.Conv1d(8, 128, window_size, stride=window_size, bias=True)
+        self.conv_2 = nn.Conv1d(128, 128, 50, stride=50, bias=True)
 
-        self.pooling = nn.MaxPool1d(int(input_length/window_size))
+        self.pooling = nn.MaxPool1d(int(input_length/(window_size*50)))
 
 
         self.fc_1 = nn.Linear(128,128)
@@ -28,10 +28,11 @@ class MalConv(nn.Module):
 
         # cnn_value = self.conv_1(x.narrow(-2, 0, 4))
         # gating_weight = self.sigmoid(self.conv_2(x.narrow(-2, 4, 4)))
-        cnn_value = self.conv_1(x)
-        gating_weight = self.sigmoid(self.conv_2(x))
+        x = self.conv_1(x)
+        x = self.conv_2(x)
+        # gating_weight = self.sigmoid(self.conv_2(x))
 
-        x = cnn_value * gating_weight
+        # x = cnn_value * gating_weight
         x = self.pooling(x)
 
         x = x.view(-1,128)
