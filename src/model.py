@@ -6,10 +6,11 @@ class MalConv(nn.Module):
     def __init__(self,input_length=2000000,window_size=500):
         super(MalConv, self).__init__()
 
-        self.embed = nn.Embedding(257, 8, padding_idx=0)
+        tmp = torch.cat((torch.zeros(1,256), torch.eye(256)), 0)
+        self.embed = nn.Embedding.from_pretrained(tmp, freeze=True)
 
-        self.conv_1 = nn.Conv1d(8, 128, window_size, stride=window_size, bias=True)
-        self.conv_2 = nn.Conv1d(8, 128, window_size, stride=window_size, bias=True)
+        self.conv_1 = nn.Conv1d(256, 128, window_size, stride=window_size, bias=True)
+        self.conv_2 = nn.Conv1d(256, 128, window_size, stride=window_size, bias=True)
 
         self.pooling = nn.MaxPool1d(int(input_length/window_size))
 
