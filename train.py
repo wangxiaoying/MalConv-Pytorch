@@ -6,7 +6,7 @@ import yaml
 import numpy as np
 import pandas as pd
 from src.util import ExeDataset,write_pred
-from src.model import MalConv
+from src.model import MalConv, ConvNet500
 from torch.utils.data import DataLoader
 import torch
 import torch.nn as nn
@@ -106,12 +106,15 @@ del val_table
 
 print('Time lapse after load all data: ', time.time()-tt_start)
 
-malconv = MalConv(input_length=first_n_byte,window_size=window_size)
+# malconv = MalConv(input_length=first_n_byte,window_size=window_size)
+convnet = ConvNet500()
 cross_entropy_loss = nn.CrossEntropyLoss()
-adam_optim = optim.Adam([{'params':malconv.parameters()}],lr=learning_rate)
+# adam_optim = optim.Adam([{'params':malconv.parameters()}],lr=learning_rate)
+adam_optim = optim.Adam([{'params':convnet.parameters()}],lr=learning_rate)
 
 if use_gpu:
-    malconv = malconv.cuda()
+    # malconv = malconv.cuda()
+    convnet = convnet.cuda()
     cross_entropy_loss = cross_entropy_loss.cuda()
 
 print('Time lapse after setup model: ', time.time()-tt_start)
@@ -148,7 +151,8 @@ while total_step < max_step:
         label = batch_data[1].cuda() if use_gpu else batch_data[1]
         label = Variable(label.long(),requires_grad=False).view(-1)
 
-        pred = malconv(exe_input)
+        # pred = malconv(exe_input)
+        pred = convnet(exe_input)
         loss = cross_entropy_loss(pred, label)
         loss.backward()
         adam_optim.step()
@@ -184,7 +188,8 @@ while total_step < max_step:
         label = val_batch_data[1].cuda() if use_gpu else val_batch_data[1]
         label = Variable(label.long(),requires_grad=False).view(-1)
 
-        pred = malconv(exe_input)
+        # pred = malconv(exe_input)
+        pred = convnet(exe_input)
         loss = cross_entropy_loss(pred, label)
 
         history['val_loss'].append(loss.cpu().data.numpy())
@@ -200,7 +205,8 @@ while total_step < max_step:
                            np.mean(history['val_loss']),np.mean(history['val_acc'])))
     if valid_best_acc < np.mean(history['val_acc']):
         valid_best_acc = np.mean(history['val_acc'])
-        torch.save(malconv,chkpt_acc_path)
+        # torch.save(malconv,chkpt_acc_path)
+        torch.save(convnet,chkpt_acc_path)
         print('Checkpoint saved at',chkpt_acc_path)
         write_pred(history['val_pred'],valid_idx,pred_path)
         print('Prediction saved at', pred_path)
