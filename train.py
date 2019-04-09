@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
 
+tt_start = time.time();
 
 # Load config file for experiment
 try:
@@ -23,6 +24,7 @@ except:
     print('Usage: python3 run_exp.py <config file path> <seed>')
     sys.exit()
 
+print('Time lapse after loading config: ', time.time()-tt_start)
 
 exp_name = conf['exp_name']+'_sd_'+str(seed)
 print('Experiment:')
@@ -59,6 +61,7 @@ display_step = conf['display_step']
 
 sample_cnt = conf['sample_cnt']
 
+print('Time lapse after setup all parameters: ', time.time()-tt_start)
 
 # Load Ground Truth.
 tr_label_table = pd.read_csv(train_label_path,header=None,index_col=0)
@@ -66,6 +69,7 @@ tr_label_table = tr_label_table.rename(columns={1:'ground_truth'})
 val_label_table = pd.read_csv(valid_label_path,header=None,index_col=0)
 val_label_table = val_label_table.rename(columns={1:'ground_truth'})
 
+print('Time lapse after load training and test label: ', time.time()-tt_start)
 
 # Merge Tables and remove duplicate
 tr_table = tr_label_table.groupby(level=0).last()
@@ -73,6 +77,8 @@ del tr_label_table
 val_table = val_label_table.groupby(level=0).last()
 del val_label_table
 tr_table = tr_table.drop(val_table.index.join(tr_table.index, how='inner'))
+
+print('Time lapse after merge and remove duplicate labels: ', time.time()-tt_start)
 
 print('Training Set:')
 print('\tTotal',len(tr_table),'files')
@@ -98,6 +104,7 @@ valid_idx = list(val_table.index)
 del tr_table
 del val_table
 
+print('Time lapse after load all data: ', time.time()-tt_start)
 
 malconv = MalConv(input_length=first_n_byte,window_size=window_size)
 cross_entropy_loss = nn.CrossEntropyLoss()
@@ -107,6 +114,7 @@ if use_gpu:
     malconv = malconv.cuda()
     cross_entropy_loss = cross_entropy_loss.cuda()
 
+print('Time lapse after setup model: ', time.time()-tt_start)
 
 step_msg = 'step-{}-loss-{:.6f}-acc-{:.4f}-time-{:.2f}'
 valid_msg = 'step-{}-tr_loss-{:.6f}-tr_acc-{:.4f}-val_loss-{:.6f}-val_acc-{:.4f}'
@@ -122,6 +130,7 @@ valid_best_acc = 0.0
 total_step = 0
 step_cost_time = 0
 
+print('Time lapse before start running model: ', time.time()-tt_start)
 
 while total_step < max_step:
 
@@ -161,6 +170,7 @@ while total_step < max_step:
 
 
     # Testing
+    test_start = time.time()
     history['val_loss'] = []
     history['val_acc'] = []
     history['val_pred'] = []
@@ -197,4 +207,6 @@ while total_step < max_step:
 
     history['tr_loss'] = []
     history['tr_acc'] = []
+    print('Time cost for one test round: ', time.time()-test_start)
 
+print('Time lapse for all: ', time.time()-tt_start)
