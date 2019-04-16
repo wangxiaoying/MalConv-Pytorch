@@ -107,7 +107,7 @@ del val_table
 print('Time lapse after load all data: ', time.time()-tt_start)
 
 # malconv = MalConv(input_length=first_n_byte,window_size=window_size)
-convnet = ConvNet500()
+convnet = ConvNet500(input_length=first_n_byte)
 cross_entropy_loss = nn.CrossEntropyLoss()
 # adam_optim = optim.Adam([{'params':malconv.parameters()}],lr=learning_rate)
 adam_optim = optim.Adam([{'params':convnet.parameters()}],lr=learning_rate)
